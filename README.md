@@ -1,369 +1,157 @@
 # Spotify Playlist Downloader CLI
 
-A high-performance command-line application built with TypeScript that downloads complete Spotify playlists as MP3 files with embedded metadata and album artwork. The application provides a fast, concurrent download pipeline, automatic tagging, and a modern terminal interface.
+A modular TypeScript CLI that retrieves Spotify playlist metadata, finds matching audio sources, downloads and converts tracks to MP3, embeds ID3 metadata and artwork, and resumes interrupted playlists.
 
-> **Disclaimer**
->
-> This project is intended for educational and research purposes. Ensure that your use complies with applicable laws, platform terms of service, and copyright regulations.
+> This project is intended for educational and research use. Follow copyright law and the terms of every service you use.
 
----
+## v1 features
 
-## Features
+- Spotify Web API client-credentials authentication
+- Playlist URL and ID parsing with paginated track retrieval
+- Candidate search and title/artist/duration matching
+- Bounded concurrent download scheduling
+- Retry with exponential backoff
+- FFmpeg MP3 conversion at 128, 192, 256, or 320 kbps
+- ID3 tags, ISRC, disc/track numbers, and cover artwork
+- Playlist cover output and resumable per-playlist history
+- Cross-platform path sanitization and atomic state writes
+- TTY progress bar with plain-text output for CI and redirected terminals
+- Dependency-injected services and public TypeScript declarations
 
-- Download an entire playlist using a single command
-- Automatic playlist parsing
-- Concurrent download pipeline
-- Embedded album artwork
-- Automatic ID3 tagging
-- Track numbering and album metadata
-- Progress tracking with live terminal updates
-- Automatic retries for failed downloads
-- Resume interrupted downloads
-- Configurable download quality
-- Lightweight and fast CLI
-- Cross-platform support (Windows, macOS, Linux)
+## Pipeline
 
----
-
-## Architecture
-
-```
-                   Playlist URL
-                         │
-                         ▼
-                 Playlist Parser
-                         │
-                         ▼
-              Playlist Metadata Fetcher
-                         │
-                         ▼
-                  Download Queue
-                         │
-         ┌───────────────┼───────────────┐
-         ▼               ▼               ▼
-     Worker 1        Worker 2        Worker N
-         │               │               │
-         ▼               ▼               ▼
-   Search Source   Search Source   Search Source
-         │               │               │
-         ▼               ▼               ▼
-   Download Audio Download Audio Download Audio
-         │               │               │
-         ▼               ▼               ▼
-    Convert MP3     Convert MP3     Convert MP3
-         │               │               │
-         ▼               ▼               ▼
-      Add Tags        Add Tags        Add Tags
-         │               │               │
-         └───────────────┼───────────────┘
-                         │
-                         ▼
-                  Final Output Folder
+```text
+Playlist URL
+    -> parse playlist ID
+    -> Spotify authentication and metadata retrieval
+    -> bounded download scheduler
+    -> source search and candidate matching
+    -> source download
+    -> FFmpeg MP3 conversion
+    -> artwork download and ID3 tagging
+    -> atomic final output and history update
 ```
 
----
+## Project structure
 
-# Folder Structure
-
-```
-spotify-playlist-downloader/
-│
-├── src/
-│   │
-│   ├── cli/
-│   │   ├── index.ts
-│   │   ├── commands.ts
-│   │   ├── options.ts
-│   │   └── help.ts
-│   │
-│   ├── config/
-│   │   ├── defaults.ts
-│   │   ├── env.ts
-│   │   └── constants.ts
-│   │
-│   ├── spotify/
-│   │   ├── auth.ts
-│   │   ├── client.ts
-│   │   ├── playlist.ts
-│   │   ├── track.ts
-│   │   ├── graphql.ts
-│   │   ├── parser.ts
-│   │   └── types.ts
-│   │
-│   ├── downloader/
-│   │   ├── queue.ts
-│   │   ├── worker.ts
-│   │   ├── manager.ts
-│   │   ├── retry.ts
-│   │   └── scheduler.ts
-│   │
-│   ├── source/
-│   │   ├── search.ts
-│   │   ├── downloader.ts
-│   │   └── matcher.ts
-│   │
-│   ├── audio/
-│   │   ├── converter.ts
-│   │   ├── metadata.ts
-│   │   ├── artwork.ts
-│   │   ├── id3.ts
-│   │   └── ffmpeg.ts
-│   │
-│   ├── storage/
-│   │   ├── cache.ts
-│   │   ├── database.ts
-│   │   ├── filesystem.ts
-│   │   └── output.ts
-│   │
-│   ├── network/
-│   │   ├── client.ts
-│   │   ├── headers.ts
-│   │   ├── session.ts
-│   │   └── proxy.ts
-│   │
-│   ├── terminal/
-│   │   ├── progress.ts
-│   │   ├── logger.ts
-│   │   ├── spinner.ts
-│   │   └── renderer.ts
-│   │
-│   ├── workers/
-│   │   ├── download.worker.ts
-│   │   ├── metadata.worker.ts
-│   │   └── convert.worker.ts
-│   │
-│   ├── utils/
-│   │   ├── file.ts
-│   │   ├── path.ts
-│   │   ├── sleep.ts
-│   │   ├── hash.ts
-│   │   ├── retry.ts
-│   │   ├── validator.ts
-│   │   └── formatter.ts
-│   │
-│   ├── types/
-│   │   ├── playlist.ts
-│   │   ├── track.ts
-│   │   ├── metadata.ts
-│   │   └── common.ts
-│   │
-│   └── index.ts
-│
-├── tests/
-│   ├── unit/
-│   ├── integration/
-│   └── fixtures/
-│
-├── scripts/
-│   ├── build.ts
-│   ├── release.ts
-│   └── clean.ts
-│
-├── docs/
-│   ├── architecture.md
-│   ├── api.md
-│   └── contributing.md
-│
-├── .github/
-│   └── workflows/
-│
-├── dist/
-├── downloads/
-├── package.json
-├── tsconfig.json
-├── eslint.config.js
-├── prettier.config.js
-├── .gitignore
-├── LICENSE
-└── README.md
+```text
+src/
+  cli/         index.ts, commands.ts, options.ts, help.ts
+  config/      defaults.ts, env.ts, constants.ts
+  spotify/     auth.ts, client.ts, playlist.ts, track.ts, graphql.ts, parser.ts, types.ts
+  downloader/  queue.ts, worker.ts, manager.ts, retry.ts, scheduler.ts
+  source/      search.ts, downloader.ts, matcher.ts
+  audio/       converter.ts, metadata.ts, artwork.ts, id3.ts, ffmpeg.ts
+  storage/     cache.ts, database.ts, filesystem.ts, output.ts
+  network/     client.ts, headers.ts, session.ts, proxy.ts
+  terminal/    progress.ts, logger.ts, spinner.ts, renderer.ts
+  workers/     download.worker.ts, metadata.worker.ts, convert.worker.ts
+  utils/       file.ts, path.ts, sleep.ts, hash.ts, retry.ts, validator.ts, formatter.ts
+  types/       playlist.ts, track.ts, metadata.ts, common.ts
+  index.ts
+tests/
+  unit/
+  integration/
+  fixtures/
+scripts/
+  build.ts
+  release.ts
+  clean.ts
+docs/
+  architecture.md
+  api.md
+  contributing.md
+.github/workflows/ci.yml
 ```
 
----
+Every file above is implemented in v1. The `workers` directory defines isolated, serializable task boundaries; the current scheduler runs orchestration in-process while yt-dlp and FFmpeg perform heavy work in child processes.
 
-# Installation
-
-Requirements:
+## Requirements
 
 - Node.js 20 or newer
-- [FFmpeg](https://ffmpeg.org/) available on `PATH`
-- [yt-dlp](https://github.com/yt-dlp/yt-dlp) available on `PATH`
-- Spotify Web API client credentials
+- FFmpeg on `PATH`, or an `FFMPEG_PATH`
+- yt-dlp on `PATH`, or a `YTDLP_PATH`
+- Spotify Premium account and a Web API client ID and secret
+
+## Installation
 
 ```bash
-git clone https://github.com/username/spotify-playlist-downloader.git
-
-cd spotify-playlist-downloader
-
 npm install
+cp .env.example .env
+npm run build
+npm link
 ```
 
-Copy `.env.example` to `.env`, then set `SPOTIFY_CLIENT_ID` and
-`SPOTIFY_CLIENT_SECRET`. Spotify credentials can be created from the Spotify
-developer dashboard. If FFmpeg or yt-dlp are not on `PATH`, set
-`FFMPEG_PATH` or `YTDLP_PATH` to their executable paths.
+On Windows PowerShell, copy the environment file with:
 
----
-
-# Usage
-
-```bash
-spotifydl <playlist-url>
+```powershell
+Copy-Item .env.example .env
 ```
 
-Example
-
-```bash
-spotifydl https://open.spotify.com/playlist/xxxxxxxxxxxxxxxx
-```
-
-Specify an output directory
-
-```bash
-spotifydl <playlist-url> --output ./Music
-```
-
-Control concurrent downloads
-
-```bash
-spotifydl <playlist-url> --workers 8
-```
-
-Resume a previous download
-
-```bash
-spotifydl <playlist-url> --resume
-```
-
----
-
-# Download Pipeline
-
-```
-Playlist URL
-      │
-      ▼
-Extract Playlist ID
-      │
-      ▼
-Retrieve Playlist Metadata
-      │
-      ▼
-Create Download Queue
-      │
-      ▼
-Search Matching Audio
-      │
-      ▼
-Download Source
-      │
-      ▼
-Convert to MP3
-      │
-      ▼
-Download Album Artwork
-      │
-      ▼
-Embed Metadata
-      │
-      ▼
-Write Output File
-```
-
----
-
-# Configuration
-
-Configuration can be provided using command-line arguments or environment variables.
-
-Example:
+Set these required values in `.env`:
 
 ```env
-OUTPUT_DIRECTORY=./downloads
-CONCURRENT_DOWNLOADS=5
-AUDIO_QUALITY=320
-LOG_LEVEL=info
+SPOTIFY_CLIENT_ID=your_client_id
+SPOTIFY_CLIENT_SECRET=your_client_secret
 ```
 
----
+## Usage
 
-# Output Structure
-
+```bash
+spotifydl <playlist-url-or-id>
+spotifydl <playlist-url-or-id> --output ./Music
+spotifydl <playlist-url-or-id> --workers 8 --quality 320
+spotifydl <playlist-url-or-id> --resume --retries 3
 ```
+
+Run without a global link:
+
+```bash
+npm run dev -- <playlist-url-or-id> --resume
+```
+
+## Configuration
+
+| Environment variable    |       Default | Purpose                                       |
+| ----------------------- | ------------: | --------------------------------------------- |
+| `SPOTIFY_CLIENT_ID`     |      required | Spotify application client ID                 |
+| `SPOTIFY_CLIENT_SECRET` |      required | Spotify application client secret             |
+| `OUTPUT_DIRECTORY`      | `./downloads` | Root output directory                         |
+| `CONCURRENT_DOWNLOADS`  |           `4` | Concurrent track jobs, 1-32                   |
+| `AUDIO_QUALITY`         |         `320` | MP3 bitrate: 128, 192, 256, or 320            |
+| `DOWNLOAD_RETRIES`      |           `2` | Retries per failed track                      |
+| `RETRY_DELAY_MS`        |        `1000` | Initial exponential-backoff delay             |
+| `REQUEST_TIMEOUT_MS`    |       `30000` | HTTP request timeout                          |
+| `LOG_LEVEL`             |        `info` | `debug`, `info`, `warn`, `error`, or `silent` |
+| `YTDLP_PATH`            |      `yt-dlp` | yt-dlp executable path                        |
+| `FFMPEG_PATH`           |      `ffmpeg` | FFmpeg executable path                        |
+| `PROXY_URL`             |         unset | Optional HTTP proxy                           |
+
+CLI options override environment configuration.
+
+## Output
+
+```text
 downloads/
-
-└── Playlist Name/
-    ├── 01 - Track One.mp3
-    ├── 02 - Track Two.mp3
-    ├── 03 - Track Three.mp3
-    └── cover.jpg
+  Playlist Name/
+    01 - Track One.mp3
+    02 - Track Two.mp3
+    cover.jpg
+    .spotifydl.json
 ```
 
----
-
-# Tech Stack
-
-| Component | Technology |
-|------------|------------|
-| Language | TypeScript |
-| Runtime | Node.js |
-| CLI | Commander |
-| HTTP Client | Undici |
-| Audio Conversion | FFmpeg |
-| Metadata | node-id3 |
-| Concurrency | Worker Threads |
-| Terminal UI | Ink / cli-progress |
-| Package Manager | npm |
-
----
-
-# Development
-
-Run in development mode
+## Development
 
 ```bash
-npm run dev
-```
-
-Run tests
-
-```bash
-npm test
-```
-
-Run lint
-
-```bash
+npm run dev -- <playlist>
 npm run lint
-```
-
-Build production
-
-```bash
+npm test
 npm run build
+npm run release:check
 ```
 
----
+See `docs/architecture.md`, `docs/api.md`, and `docs/contributing.md` for extension points and contribution guidance.
 
-# Roadmap
+## License
 
-- Incremental downloads
-- Download history
-- Local cache
-- Playlist synchronization
-- Multiple output formats
-- Automatic updates
-- Configuration profiles
-- Plugin architecture
-- Cross-platform standalone binaries
-
----
-
-# Contributing
-
-Contributions are welcome. Please open an issue before submitting significant changes. Ensure that all tests pass and follow the project's coding standards.
-
----
-
-# License
-
-This project is licensed under the MIT License.
+MIT

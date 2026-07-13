@@ -17,3 +17,12 @@ export function parsePlaylistId(input: string): string {
 
   throw new Error('Expected a Spotify playlist URL or 22-character playlist ID');
 }
+
+export function isSpotifyPlaylist(input: string): boolean {
+  try {
+    parsePlaylistId(input);
+    return true;
+  } catch {
+    return false;
+  }
+}

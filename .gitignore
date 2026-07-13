@@ -5,3 +5,4 @@ downloads/
 *.part
 *.tmp
 coverage/
+.npm-cache/
