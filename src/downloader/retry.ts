@@ -1,11 +1,13 @@
 import { withRetry } from '../utils/retry.js';
-import type { Logger } from '../terminal/logger.js';
+interface RetryLogger {
+  warn(message: string, detail?: unknown): void;
+}
 
 export function retryDownload<T>(
   operation: () => Promise<T>,
   retries: number,
   delayMs: number,
-  logger?: Logger,
+  logger?: RetryLogger,
 ): Promise<T> {
   return withRetry(operation, {
     retries,

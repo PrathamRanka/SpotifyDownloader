@@ -19,10 +19,13 @@
     "build": "tsx scripts/build.ts",
     "start": "node dist/cli/index.js",
     "test": "vitest run",
+    "test:coverage": "vitest run --coverage",
     "test:watch": "vitest",
     "lint": "eslint .",
     "format": "prettier --write .",
     "format:check": "prettier --check .",
+    "workflows:check": "tsx scripts/check-workflows.ts",
+    "smoke": "tsx scripts/smoke.ts",
     "release:check": "tsx scripts/release.ts"
   },
   "engines": {
@@ -39,11 +42,13 @@
     "@eslint/js": "^9.0.0",
     "@types/cli-progress": "^3.11.6",
     "@types/node": "^24.13.3",
+    "@vitest/coverage-v8": "^3.0.0",
     "eslint": "^9.0.0",
     "prettier": "^3.0.0",
     "tsx": "^4.0.0",
     "typescript": "^5.8.0",
     "typescript-eslint": "^8.0.0",
-    "vitest": "^3.0.0"
+    "vitest": "^3.0.0",
+    "yaml": "^2.0.0"
   }
 }

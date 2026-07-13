@@ -5,17 +5,27 @@ import { FileSystem } from '../storage/filesystem.js';
 import { OutputStorage } from '../storage/output.js';
 import { retryDownload } from './retry.js';
 import { schedule } from './scheduler.js';
-import { DownloadWorker } from './worker.js';
-import type { Logger } from '../terminal/logger.js';
-import { ArtworkService } from '../audio/artwork.js';
+import type { Track } from '../types/track.js';
+
+interface TrackWorker {
+  execute(track: Track, index: number, total: number, output: OutputStorage): Promise<string>;
+}
+
+interface ManagerLogger {
+  warn(message: string, detail?: unknown): void;
+}
+
+interface PlaylistArtwork {
+  download(url?: string): Promise<Buffer | undefined>;
+}
 
 export class DownloadManager {
   constructor(
     private readonly config: AppConfig,
-    private readonly worker: DownloadWorker,
-    private readonly logger: Logger,
+    private readonly worker: TrackWorker,
+    private readonly logger: ManagerLogger,
     private readonly onProgress: (progress: DownloadProgress) => void,
-    private readonly artwork: ArtworkService,
+    private readonly artwork: PlaylistArtwork,
     private readonly filesystem = new FileSystem(),
   ) {}
 

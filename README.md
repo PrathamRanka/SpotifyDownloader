@@ -150,7 +150,7 @@ npm run build
 npm run release:check
 ```
 
-See `docs/architecture.md`, `docs/api.md`, and `docs/contributing.md` for extension points and contribution guidance.
+See `docs/user-guide.md` for complete setup and usage instructions. See `docs/architecture.md`, `docs/api.md`, and `docs/contributing.md` for extension points and contribution guidance.
 
 ## License
 

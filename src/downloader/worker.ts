@@ -1,21 +1,18 @@
 import path from 'node:path';
 import type { AppConfig, DownloadProgress } from '../types/common.js';
 import type { Track } from '../types/track.js';
-import { ArtworkService } from '../audio/artwork.js';
-import { AudioConverter } from '../audio/converter.js';
-import { Id3Writer } from '../audio/id3.js';
+import type { AudioMetadata } from '../types/metadata.js';
+import type { SourceCandidate } from '../types/track.js';
 import { metadataFromTrack } from '../audio/metadata.js';
-import { SourceDownloader } from '../source/downloader.js';
-import { SourceSearch } from '../source/search.js';
 import { FileSystem } from '../storage/filesystem.js';
 import { OutputStorage } from '../storage/output.js';
 
 export interface WorkerDependencies {
-  search: SourceSearch;
-  sourceDownloader: SourceDownloader;
-  converter: AudioConverter;
-  artwork: ArtworkService;
-  id3: Id3Writer;
+  search: { search(track: Track): Promise<SourceCandidate> };
+  sourceDownloader: { download(candidate: SourceCandidate, outputBase: string): Promise<string> };
+  converter: { toMp3(input: string, output: string, quality: number): Promise<void> };
+  artwork: { download(url?: string): Promise<Buffer | undefined> };
+  id3: { write(file: string, metadata: AudioMetadata, artwork?: Buffer): void };
   filesystem: FileSystem;
 }
 
