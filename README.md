@@ -182,6 +182,13 @@ spotify-playlist-downloader/
 
 # Installation
 
+Requirements:
+
+- Node.js 20 or newer
+- [FFmpeg](https://ffmpeg.org/) available on `PATH`
+- [yt-dlp](https://github.com/yt-dlp/yt-dlp) available on `PATH`
+- Spotify Web API client credentials
+
 ```bash
 git clone https://github.com/username/spotify-playlist-downloader.git
 
@@ -189,6 +196,11 @@ cd spotify-playlist-downloader
 
 npm install
 ```
+
+Copy `.env.example` to `.env`, then set `SPOTIFY_CLIENT_ID` and
+`SPOTIFY_CLIENT_SECRET`. Spotify credentials can be created from the Spotify
+developer dashboard. If FFmpeg or yt-dlp are not on `PATH`, set
+`FFMPEG_PATH` or `YTDLP_PATH` to their executable paths.
 
 ---
 
